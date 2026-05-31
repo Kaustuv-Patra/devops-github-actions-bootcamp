@@ -1,0 +1,50 @@
+name: OIC Integration Governance Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - OIC-*
+      - feature/**
+
+  pull_request:
+    branches:
+      - main
+      - OIC-*
+
+jobs:
+  validate-oic-artifacts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: List Integration Artifacts
+        run: |
+          echo "Scanning OIC integration artifacts..."
+          find oic -name "*.iar"
+
+      - name: Validate IAR Naming Convention
+        run: |
+          echo "Validating .iar naming convention..."
+
+          invalid_files=0
+
+          for file in $(find oic -name "*.iar"); do
+            filename=$(basename "$file")
+
+            if [[ ! $filename =~ ^[A-Za-z0-9]+_[0-9]+\.[0-9]+\.[0-9]+\.iar$ ]]; then
+              echo "Invalid artifact naming: $filename"
+              invalid_files=1
+            else
+              echo "Valid artifact: $filename"
+            fi
+          done
+
+          if [ $invalid_files -eq 1 ]; then
+            echo "Artifact naming validation failed."
+            exit 1
+          fi
+
+          echo "All artifact names are valid."
